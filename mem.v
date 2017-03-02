@@ -1,5 +1,10 @@
 module mem (
-input bla
-output blalala
-....
+  input [31:0] address, dataIN,
+  output [31:0] memout,
+  input clk
+)
+  
+  
+  
+  endmodule;
 )
