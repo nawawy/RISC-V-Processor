@@ -1,4 +1,4 @@
-module immediatehandler (
+module imm_handler (
 input bla
 output blalala
 ....
