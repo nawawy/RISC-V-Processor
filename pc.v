@@ -13,7 +13,7 @@
     input [31:0] ALUout;       //ALUout[31]
     input [31:0] Bimm;        //immediate encoded in B type      
     reg [31:0] pc;           //the pc register
-    output pcOut;
+    output [31:0] pcOut;
     
     wire shouldBranch;
     assign shouldBranch = branch & ALUout[0]; //This wire is to indicate whether the branching condition is true or not
