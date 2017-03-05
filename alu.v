@@ -1,33 +1,66 @@
 module alu(
+    //////////////////////////////////////////////////////////////
+    // the following module models an alu which takes two operands
+    // and sets the output according ot operation passed to it
+    /////////////////////////////////////////////////////////////
     input [31 : 0] srca,
     input [31 : 0] srcb,
     input [5 : 0] aluCtrl,
-    output reg [31 : 0] aluOut,
-    output reg branch
+    output reg [31 : 0] aluOut
 );
 
+localparam  add_  = 6'd0,
+            sub_  = 6'd1,
+            xor_  = 6'd2,
+            sll_  = 6'd3,
+            slt_  = 6'd4,
+            srl_  = 6'd5,
+            sra_  = 6'd6,
+            and_  = 6'd7,
+            or_   = 6'd8,
+            beq_  = 6'd9,
+            bne_  = 6'd10,
+            blt_  = 6'd11,
+            bge_  = 6'd12,
+            sltu_ = 6'd13,
+            bltu_ = 6'd14,
+            bgeu_ = 6'd15;
+
 reg [31 : 0] aluOut_tmp;
-reg [31 : 0] aluOut_slt;
-reg [31 : 0] aluOut_sltu;
-reg [31 : 0] aluOut_blt;
-reg [31 : 0] aluOut_bge;
-wire [31 : 0] srcb_2cmp;
+wire [31 : 0]  srcb_2cmp;
+wire   cmp_2,
+       z,
+       v,
+       lt,
+       ge,
+       bch;
+reg c;
+assign cmp_2 = (aluCtrl == sub_) | (aluCtrl == add_)
+             | (aluCtrl == beq_) | (aluCtrl == bne_)
+             | (aluCtrl == blt_) | (aluCtrl == bge_);
+assign srcb_2cmp = (aluCtrl == cmp_2) ? ~srcb + {32{1'b1}} : srcb;
+assign z = ~(!aluOut_tmp);
+assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
+//////////////////////////////////////////////////////////
+// flags are used for comparison operations...source:
+// http://static.righto.com/images/ARM1/condition_bits.png
+//////////////////////////////////////////////////////////
+assign lt = (aluOut_tmp[31] != v) ? 1'b1 : 1'b0;
+assign ge = ((c == 1) | (z == 0)) ? 1'b1 : 1'b0;
+assign bch = {1'b1, {30{1'b0}}};
 
-localparam  add_    = 6'd0,
-            sub_    = 6'd1, 
-            xor_    = 6'd2,
-            sll_    = 6'd3,
-            slt_    = 6'd4, 
-            sltu_   = 6'd5, 
-            srl_    = 6'd6,
-            sra_    = 6'd7,
-            and_    = 6'd8,
-            or_     = 6'd9;
-
-always @(*) begin
+always @(*)
     case(aluCtrl)
-    add_:
-        aluOut_tmp = srca + srcb;
+    add_ |
+    sub_ |
+    beq_ |
+    bne_ |
+    bge_ |
+    blt_ |
+    bltu_ |
+    bgeu_ |
+    sltu_:
+        {c, aluOut_tmp} = srca + srcb_2cmp;
     xor_:
         aluOut_tmp = srca ^ srcb;
     sll_:
@@ -40,8 +73,30 @@ always @(*) begin
         aluOut_tmp = srca | srcb;
     and_:
         aluOut_tmp = srca & srcb;
-    
-    
-end
+    endcase
 
+// always block to evaluate comparisons
+
+always @(*)
+    case(aluCtrl)
+    add_ |
+    sub_:
+        aluOut = aluOut_tmp;
+    beq_:
+        aluOut = (z == 1'b1) ? bch : 1'b0;
+    bne_:
+        aluOut = (z == 1'b0) ? bch : 1'b0;
+    blt_:
+        aluOut = (lt == 1'b1) ? bch : 1'b0;
+    bge_:
+        aluOut = (lt == 1'b0) ? bch : 1'b0;
+    bltu_:
+        aluOut = (ge == 1'b0) ? bch : 1'b0;
+    bgeu_:
+        aluOut = (ge == 1'b1) ? bch : 1'b0;
+    sltu_:
+        aluOut = (ge == 1'b0) ? {{31{1'b0}}, 1'b1} : 1'b0;
+    default:
+        aluOut = aluOut_tmp;
+endcase
 endmodule
