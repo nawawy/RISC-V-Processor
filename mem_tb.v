@@ -52,7 +52,7 @@ module memkkk_tb;
             address = i;
             @(negedge clk);
             if (memOut != i) begin
-               $display("Error at address %d, found %d, expected %d");
+               $display("Error at address %d, found %d, expected %d", address, memOut, i);
                flag = 1;
             end
         end
