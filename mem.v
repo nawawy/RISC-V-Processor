@@ -4,28 +4,18 @@ module mem (
     input clk,
     input rst,
     input wEn,
-    output [31:0] memout
+    output reg [31:0] memOut
 );
 
 reg [31 : 0] ram [31 : 0];
+integer i;
 
-/*
-//initial block to read instruction from memory
-initial begin
-    $readmemh("instr.dat", ram);
-end
-*/
 //sequential logic to model writing to memory
-
 always @(posedge clk)
-    if (rst)
-        //reset all values stored in memory?
-        ram[1] <= {32{1'b0}};
-    else 
         if (wEn)
             ram[address] <= dataIn;
-
+            
 //combinational logic to read from memory 
-assign memout = ram[address];
-
+always @(*)
+    memOut = ram[address];
 endmodule
