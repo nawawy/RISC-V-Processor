@@ -135,6 +135,11 @@ module controlUnit();
                     alu_signals[0] = 1'b1;
                     alu_signals[8:7] = 2'b00;
                     
+                    if((opcode == 7'b1100011)
+                        nextstate = B_PC;
+                    else
+                        nextstate = RIA_WB;
+                        
                     if((opcode == 7'b1100011) && (func3 == 3'b000))
                         alu_signals[6:1] = beq_;
                     else
@@ -183,8 +188,33 @@ module controlUnit();
                     if((opcode == 7'b0110011) && (func3 == 3'b111) && (func7 == 7'b0000000))
                         alu_signals[6:1] = and_;
                 end
+                
+            AUIPC_alu:    
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'bxx0;   // wbSEl, wbEN
+                    reg_signals = 5'b00010;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals[0] = 1'b1;
+                    alu_signals[8:7] = 2'b11;
+                    
+                    alu_signals[6:1] = add_;
+                    
+                    nextstate = RIA_WB;
+                end
             
+            RIA_WB:
+                begin
+                    
+                end
+                
+                
+                
+                
         endcase
+        
+        
     end
 
 endmodule
