@@ -56,10 +56,9 @@ module controlUnit();
                 begin
                     mem_signals = 1'b11xxx0;
                     wb_signals = 3'bxx0;
-                    reg_signals[1:0] = 2'b00;
+                    reg_signals = 5'bxx000;
                     imm_signals = 4'bxxx0;
                     pc_signals = 3'b000;
-                    reg_signals[2] = 1'b0;
                     alu_signals = 9'b00xxxxxx0;
                     
                 
