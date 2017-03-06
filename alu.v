@@ -27,17 +27,19 @@ localparam  add_  = 6'd0,
             bgeu_ = 6'd15;
 
 reg [31 : 0] aluOut_tmp;
+reg c;
 wire [31 : 0]  srcb_2cmp;
+wire [31 : 0] branch;
 wire   cmp_2,
        z,
        v,
        lt,
-       ge,
-       bch;
-reg c;
+       ge;
 assign cmp_2 = (aluCtrl == sub_) | (aluCtrl == add_)
              | (aluCtrl == beq_) | (aluCtrl == bne_)
-             | (aluCtrl == blt_) | (aluCtrl == bge_);
+             | (aluCtrl == blt_) | (aluCtrl == bge_)
+             | (aluCtrl == bltu_) | (aluCtrl == bgeu_)
+             | (aluCtrl == sltu_);
 assign srcb_2cmp = (aluCtrl == cmp_2) ? ~srcb + {32{1'b1}} : srcb;
 assign z = ~(!aluOut_tmp);
 assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
@@ -47,7 +49,7 @@ assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
 //////////////////////////////////////////////////////////
 assign lt = (aluOut_tmp[31] != v) ? 1'b1 : 1'b0;
 assign ge = ((c == 1) | (z == 0)) ? 1'b1 : 1'b0;
-assign bch = {1'b1, {30{1'b0}}};
+assign branch = {1'b1, {30{1'b0}}};
 
 always @(*)
     case(aluCtrl)
@@ -79,21 +81,18 @@ always @(*)
 
 always @(*)
     case(aluCtrl)
-    add_ |
-    sub_:
-        aluOut = aluOut_tmp;
     beq_:
-        aluOut = (z == 1'b1) ? bch : 1'b0;
+        aluOut = (z == 1'b1) ? branch : 1'b0;
     bne_:
-        aluOut = (z == 1'b0) ? bch : 1'b0;
+        aluOut = (z == 1'b0) ? branch : 1'b0;
     blt_:
-        aluOut = (lt == 1'b1) ? bch : 1'b0;
+        aluOut = (lt == 1'b1) ? branch : 1'b0;
     bge_:
-        aluOut = (lt == 1'b0) ? bch : 1'b0;
+        aluOut = (lt == 1'b0) ? branch : 1'b0;
     bltu_:
-        aluOut = (ge == 1'b0) ? bch : 1'b0;
+        aluOut = (ge == 1'b0) ? branch : 1'b0;
     bgeu_:
-        aluOut = (ge == 1'b1) ? bch : 1'b0;
+        aluOut = (ge == 1'b1) ? branch : 1'b0;
     sltu_:
         aluOut = (ge == 1'b0) ? {{31{1'b0}}, 1'b1} : 1'b0;
     default:
