@@ -40,7 +40,7 @@ assign cmp_2 = (aluCtrl == sub_) | (aluCtrl == add_)
              | (aluCtrl == blt_) | (aluCtrl == bge_)
              | (aluCtrl == bltu_) | (aluCtrl == bgeu_)
              | (aluCtrl == sltu_);
-assign srcb_2cmp = (aluCtrl == cmp_2) ? ~srcb + {32{1'b1}} : srcb;
+assign srcb_2cmp = (aluCtrl == cmp_2) ? ~srcb + {{31{1'b0}}, 1'b1} : srcb;
 assign z = ~(!aluOut_tmp);
 assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
 //////////////////////////////////////////////////////////
@@ -53,14 +53,15 @@ assign branch = {1'b1, {30{1'b0}}};
 
 always @(*)
     case(aluCtrl)
-    add_ |
-    sub_ |
-    beq_ |
-    bne_ |
-    bge_ |
-    blt_ |
-    bltu_ |
-    bgeu_ |
+    add_,
+    sub_,
+    beq_,
+    bne_,
+    bge_,
+    blt_,
+    slt_,
+    bltu_,
+    bgeu_,
     sltu_:
         {c, aluOut_tmp} = srca + srcb_2cmp;
     xor_:
@@ -95,6 +96,8 @@ always @(*)
         aluOut = (ge == 1'b1) ? branch : 1'b0;
     sltu_:
         aluOut = (ge == 1'b0) ? {{31{1'b0}}, 1'b1} : 1'b0;
+    slt_:
+        aluOut = (lt == 1'b1) ?{{31{1'b0}}, 1'b1} : 1'b0;
     default:
         aluOut = aluOut_tmp;
 endcase
