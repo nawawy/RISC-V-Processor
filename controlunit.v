@@ -85,11 +85,28 @@ module controlUnit();
                     mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
                     wb_signals = 3'bxx0;   // wbSEl, wbEN
                     reg_signals = 5'b10010;  // regsel, regEN, rs1, rs2
-                    imm_signals[3:1] = ;
                     imm_signals[0] = 1'b1;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    case (opcode)
+                    7'b1100011:
+                        imm_signals[3:1] = 3'b010;
+                    7'b0000011 |
+                    7'b0010011 |
+                    7'b0110111 |
+                    7'b0010111 |
+                        imm_signals[3:1] = 3'b000;
+                    
+                    
+                    endcase
+                    
                 
+                        
+                end
+            RB_alu:
+                begin
+                    
                 
                 end
             
