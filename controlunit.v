@@ -148,7 +148,7 @@ module controlUnit();
                     alu_signals[0] = 1'b1;
                     alu_signals[8:7] = 2'b00;
                     
-                    if((opcode == 7'b1100011)
+                    if(opcode == 7'b1100011)
                         nextstate = B_PC;
                     else
                         nextstate = RIA_WB;
@@ -276,7 +276,7 @@ module controlUnit();
                 
             LD_WB:
                 begin
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     wb_signals = 3'b100;   // wbSEl, wbEN
                     reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
@@ -318,7 +318,7 @@ module controlUnit();
                 
             LD_MEM:
                 begin
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     
                     wb_signals = 3'b001;   // wbSEl, wbEN
@@ -346,7 +346,7 @@ module controlUnit();
                 
             S_MEM:
                 begin 
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b1; 
                     
                     wb_signals = 3'b000;   // wbSEl, wbEN
