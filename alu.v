@@ -9,39 +9,41 @@ module alu(
     output reg [31 : 0] aluOut
 );
 
-localparam  add_  = 6'd0,
-            sub_  = 6'd1,
-            xor_  = 6'd2,
-            sll_  = 6'd3,
-            slt_  = 6'd4,
-            srl_  = 6'd5,
-            sra_  = 6'd6,
-            and_  = 6'd7,
-            or_   = 6'd8,
-            beq_  = 6'd9,
-            bne_  = 6'd10,
-            blt_  = 6'd11,
-            bge_  = 6'd12,
-            sltu_ = 6'd13,
-            bltu_ = 6'd14,
-            bgeu_ = 6'd15;
+localparam  
+    add_  = 6'd0,
+    sub_  = 6'd1,
+    xor_  = 6'd2,
+    sll_  = 6'd3,
+    srl_  = 6'd4,
+    sra_  = 6'd5,
+    and_  = 6'd6,
+    or_   = 6'd7,
+    slt_  = 6'd8,
+    beq_  = 6'd9,
+    bne_  = 6'd10,
+    blt_  = 6'd11,
+    bge_  = 6'd12,
+    sltu_ = 6'd13,
+    bltu_ = 6'd14,
+    bgeu_ = 6'd15;
 
 reg [31 : 0] aluOut_tmp;
 reg c;
 wire [31 : 0]  srcb_2cmp;
 wire [31 : 0] branch;
-wire   cmp_2,
-       z,
-       v,
-       lt,
-       ge;
+wire   
+    cmp_2,
+    z,
+    v,
+    lt,
+    ge;
 assign cmp_2 = (aluCtrl == sub_) | (aluCtrl == add_)
              | (aluCtrl == beq_) | (aluCtrl == bne_)
              | (aluCtrl == blt_) | (aluCtrl == bge_)
              | (aluCtrl == bltu_) | (aluCtrl == bgeu_)
              | (aluCtrl == sltu_);
 assign srcb_2cmp = (aluCtrl == cmp_2) ? ~srcb + {{31{1'b0}}, 1'b1} : srcb;
-assign z = ~(!aluOut_tmp);
+assign z = ~(|aluOut_tmp);
 assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
 //////////////////////////////////////////////////////////
 // flags are used for comparison operations...source:
@@ -49,7 +51,7 @@ assign v = c ^ srcb_2cmp[31] ^ srca[31] ^ aluOut_tmp[31];
 //////////////////////////////////////////////////////////
 assign lt = (aluOut_tmp[31] != v) ? 1'b1 : 1'b0;
 assign ge = ((c == 1) | (z == 0)) ? 1'b1 : 1'b0;
-assign branch = {1'b1, {30{1'b0}}};
+assign branch = {1'b1, {31{1'b0}}};
 
 always @(*)
     case(aluCtrl)
@@ -97,7 +99,7 @@ always @(*)
     sltu_:
         aluOut = (ge == 1'b0) ? {{31{1'b0}}, 1'b1} : 1'b0;
     slt_:
-        aluOut = (lt == 1'b1) ?{{31{1'b0}}, 1'b1} : 1'b0;
+        aluOut = (lt == 1'b1) ? {{31{1'b0}}, 1'b1} : 1'b0;
     default:
         aluOut = aluOut_tmp;
 endcase
