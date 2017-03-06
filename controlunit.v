@@ -189,6 +189,51 @@ module controlUnit();
                         alu_signals[6:1] = and_;
                 end
                 
+                
+            I_alu:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'bxx0;   // wbSEl, wbEN
+                    reg_signals = 5'bxx000;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals[0] = 1'b1;
+                    alu_signals[8:7] = 2'b01;
+                    
+                     if(opcode == 7'b0000011)
+                        alu_signals[6:1] = add_;
+                    else
+                     if(opcode == 7'b0100011)
+                        alu_signals[6:1] = add_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b000))
+                        alu_signals[6:1] = add_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b010))
+                        alu_signals[6:1] = slt_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b011))
+                        alu_signals[6:1] = sltu_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b100))
+                        alu_signals[6:1] = xor_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b110))
+                        alu_signals[6:1] = or_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b111))
+                        alu_signals[6:1] = and_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b001))
+                        alu_signals[6:1] = sll_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b101) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = srl_;
+                    else
+                     if((opcode == 7'b0010011) && (func3 == 3'b101) && (func7 == 7'b0100000))
+                        alu_signals[6:1] = sra_;
+                end
+                
             AUIPC_alu:    
                 begin
                     mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
@@ -206,11 +251,145 @@ module controlUnit();
             
             RIA_WB:
                 begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'b010;   // wbSEl, wbEN
+                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                 
+                    nextstate = PCplus4;
+                end
+                
+            LD_WB:
+                begin
+                    mem_signals[5:4] = 2'b00
+                    mem_signals[0] = 1'b0; 
+                    wb_signals = 3'b100;   // wbSEl, wbEN
+                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
                     
+                    case(func3)
+                        3'b000:
+                            mem_signals[3:1] = 3'b010;
+                        3'b001:
+                            mem_signals[3:1] = 3'b001;
+                        3'b010:
+                            mem_signals[3:1] = 3'b000;
+                        3'b100:
+                            mem_signals[3:1] = 3'b010;
+                        3'b101:
+                            mem_signals[3:1] = 3'b001;
+                    endcase
+                    
+                    if(opcode == 7'b0000011)
+                        nextstate = LD_MEM;
+                    else
+                        nextstate = S_MEM;
                 end
                 
                 
+            J_WB:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'b010;   // wbSEl, wbEN
+                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                  
+                    nextstate = J_PC;
+                end
                 
+            LD_MEM:
+                begin
+                    mem_signals[5:4] = 2'b00
+                    mem_signals[0] = 1'b0; 
+                    
+                    wb_signals = 3'b001;   // wbSEl, wbEN
+                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    case(func3)
+                        3'b000:
+                            mem_signals[3:1] = 3'b010;
+                        3'b001:
+                            mem_signals[3:1] = 3'b001;
+                        3'b010:
+                            mem_signals[3:1] = 3'b000;
+                        3'b100:
+                            mem_signals[3:1] = 3'b010;
+                        3'b101:
+                            mem_signals[3:1] = 3'b001;
+                    endcase
+                    
+                    nextstate = PCplus4;
+                
+                end
+                
+            S_MEM:
+                begin 
+                    mem_signals[5:4] = 2'b00
+                    mem_signals[0] = 1'b1; 
+                    
+                    wb_signals = 3'b000;   // wbSEl, wbEN
+                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    case(func3)
+                        3'b000:
+                            mem_signals[3:1] = 3'b010;
+                        3'b001:
+                            mem_signals[3:1] = 3'b001;
+                        3'b010:
+                            mem_signals[3:1] = 3'b000;
+                        3'b100:
+                            mem_signals[3:1] = 3'b010;
+                        3'b101:
+                            mem_signals[3:1] = 3'b001;
+                    endcase
+                    
+                    nextstate = PCplus4;
+                
+                
+                end
+                
+            PCplus4:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'b000;   // wbSEl, wbEN
+                    reg_signals = 5'b00000;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b010;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                end
+                
+            B_PC:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'b000;   // wbSEl, wbEN
+                    reg_signals = 5'b00000;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b110;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                end
+                
+            J_PC:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'b000;   // wbSEl, wbEN
+                    reg_signals = 5'b00000;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b011;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                end
+                    
                 
         endcase
         
