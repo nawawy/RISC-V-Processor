@@ -42,7 +42,24 @@ module controlUnit();
             S_MEM  = 5'd12,
             PCplus4  = 5'd13,
             B_PC  = 5'd14,
-            J_PC  = 5'd15;
+            J_PC  = 5'd15,
+            
+            add_  = 6'd0,
+            sub_  = 6'd1,
+            xor_  = 6'd2,
+            sll_  = 6'd3,
+            srl_  = 6'd4,
+            sra_  = 6'd5,
+            and_  = 6'd6,
+            or_   = 6'd7,
+            slt_  = 6'd8,
+            beq_  = 6'd9,
+            bne_  = 6'd10,
+            blt_  = 6'd11,
+            bge_  = 6'd12,
+            sltu_ = 6'd13,
+            bltu_ = 6'd14,
+            bgeu_ = 6'd15;
     
     always@(posedge clk)
     begin
@@ -61,7 +78,7 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b00xxxxxx0;  // srca, srcb, aluctrl, aluEN
-                    if(opcode == )
+                    if(opcode == 7'b0000000)
                         nextstate = decode1_I;
                     else
                         nextstate = decode1_R;
@@ -75,7 +92,7 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
-                    if (opcode == )
+                    if (opcode == 7'b0000000 )
                         nextstate = AUIPC_alu;
                     else
                         nextstate = decode2;
@@ -92,22 +109,79 @@ module controlUnit();
                     case (opcode)
                     7'b1100011:
                         imm_signals[3:1] = 3'b010;
-                    7'b0000011 |
-                    7'b0010011 |
-                    7'b0110111 |
-                    7'b0010111 |
+                    7'b0000011 ,
+                    7'b0010011 ,
+                    7'b0110111 ,
+                    7'b0010111 :
                         imm_signals[3:1] = 3'b000;
-                    
-                    
+                    7'b1101111,
+                    7'b1100111: 
+                        imm_signals[3:1] = 3'b011;
+                    7'b0100011:
+                        imm_signals[3:1] = 3'b001;
+                    default: 
+                        imm_signals[3:1] = 3'b100;
                     endcase
                     
-                
-                        
+                    nextstate = I_alu;
                 end
             RB_alu:
                 begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'bxx0;   // wbSEl, wbEN
+                    reg_signals = 5'bxx000;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals[0] = 1'b1;
+                    alu_signals[8:7] = 2'b00;
                     
-                
+                    if((opcode == 7'b1100011) && (func3 == 3'b000))
+                        alu_signals[6:1] = beq_;
+                    else
+                    if((opcode == 7'b1100011) && (func3 == 3'b001))
+                        alu_signals[6:1] = bne_;
+                    else
+                    if((opcode == 7'b1100011) && (func3 == 3'b100))
+                        alu_signals[6:1] = blt_;
+                    else
+                    if((opcode == 7'b1100011) && (func3 == 3'b101))
+                        alu_signals[6:1] = bge_;
+                    else
+                    if((opcode == 7'b1100011) && (func3 == 3'b110))
+                        alu_signals[6:1] = bltu_;
+                    else
+                    if((opcode == 7'b1100011) && (func3 == 3'b111))
+                        alu_signals[6:1] = bgeu_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b000) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = add_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b000) && (func7 == 7'b0100000))
+                        alu_signals[6:1] = sub_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b001) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = sll_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b010) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = slt_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b011) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = sltu_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b100) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = xor_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b101) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = srl_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b101) && (func7 == 7'b0100000))
+                        alu_signals[6:1] = sra_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b110) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = or_;
+                    else
+                    if((opcode == 7'b0110011) && (func3 == 3'b111) && (func7 == 7'b0000000))
+                        alu_signals[6:1] = and_;
                 end
             
         endcase
