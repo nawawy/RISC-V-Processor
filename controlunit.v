@@ -78,7 +78,7 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b00xxxxxx0;  // srca, srcb, aluctrl, aluEN
-                    if(opcode == 7'b0000000)
+                    if(opcode == 7'b0010011)
                         nextstate = decode1_I;
                     else
                         nextstate = decode1_R;
@@ -92,7 +92,7 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
-                    if (opcode == 7'b0000000 )
+                    if (opcode == 7'b0010111)
                         nextstate = AUIPC_alu;
                     else
                         nextstate = decode2;
@@ -125,6 +125,19 @@ module controlUnit();
                     
                     nextstate = I_alu;
                 end
+                
+            decode2:
+                begin
+                    mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
+                    wb_signals = 3'bxx0;   // wbSEl, wbEN
+                    reg_signals = 5'b10001;  // regsel, regEN, rs1, rs2
+                    imm_signals = 4'bxxx0;   // immsel, immEN
+                    pc_signals = 3'b000;    // branch, pcEN, JalEN
+                    alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                  
+                
+                end
+            
             RB_alu:
                 begin
                     mem_signals = 6'b00xxx0; // IFen, fetchEN, bytesel, memWrite
@@ -135,7 +148,7 @@ module controlUnit();
                     alu_signals[0] = 1'b1;
                     alu_signals[8:7] = 2'b00;
                     
-                    if((opcode == 7'b1100011)
+                    if(opcode == 7'b1100011)
                         nextstate = B_PC;
                     else
                         nextstate = RIA_WB;
@@ -263,7 +276,7 @@ module controlUnit();
                 
             LD_WB:
                 begin
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     wb_signals = 3'b100;   // wbSEl, wbEN
                     reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
@@ -305,7 +318,7 @@ module controlUnit();
                 
             LD_MEM:
                 begin
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     
                     wb_signals = 3'b001;   // wbSEl, wbEN
@@ -333,7 +346,7 @@ module controlUnit();
                 
             S_MEM:
                 begin 
-                    mem_signals[5:4] = 2'b00
+                    mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b1; 
                     
                     wb_signals = 3'b000;   // wbSEl, wbEN
@@ -368,6 +381,8 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b010;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    nextstate = fetch;
                 end
                 
             B_PC:
@@ -378,6 +393,8 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b110;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    nextstate = fetch;
                 end
                 
             J_PC:
@@ -388,6 +405,8 @@ module controlUnit();
                     imm_signals = 4'bxxx0;   // immsel, immEN
                     pc_signals = 3'b011;    // branch, pcEN, JalEN
                     alu_signals = 9'bxxxxxxxx0;  // srca, srcb, aluctrl, aluEN
+                    
+                    nextstate = fetch;
                 end
                     
                 
