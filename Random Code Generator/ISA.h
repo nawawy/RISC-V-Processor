@@ -21,6 +21,10 @@ class ISA
         ISA();
         string getRandom(int);
         string handlePC0(int);
+        void Itype(string&,int&,long long&,int,bool);
+        void shifts(string&,int&,int&,int);
+        void UI(string&,long long&,int);
+        void jumps();
         ~ISA();
 };
 #endif //RISCV32I_RANDOM_TESTCASES_GENERATOR_ISA_H
