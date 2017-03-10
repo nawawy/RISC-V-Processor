@@ -4,22 +4,16 @@
 
 #include "Instr.h"
 
-Instr::Instr(string format, string keyword) {
 
-    this-> format = format;
+Instr::Instr(string keyword) {
     this->keyword = keyword;
-    //this->ID = ID;
-}
-
-Instr::~Instr() {
-
 }
 
 string Instr::getKeyword() {
     return this->keyword;
 }
 
+Instr::~Instr() {
 
-string Instr::getFormat() {
-    return this->format;
 }
+
