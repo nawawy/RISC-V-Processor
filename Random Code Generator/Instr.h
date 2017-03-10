@@ -19,23 +19,7 @@ class Instr
         ~Instr();
 };
 
-Instr::Instr(string format, string keyword) {
-
-    this-> format = format;
-    this->keyword = keyword;
-    //this->ID = ID;
-}
-
-Instr::~Instr() {
-
-}
-
-string Instr::getFormat() {
-    return this->format;
-}
-
-string Instr::getKeyword() {
-    return this->keyword;
-}
-
 #endif //RISCV32I_RANDOM_TESTCASES_GENERATOR_INSTR_H
+
+//Format isn't used for now, (maybe it won't be used at all)
+//Nothing to comment on, too basic

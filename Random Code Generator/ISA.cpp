@@ -1,13 +1,16 @@
 //
 // Created by Oba on 09/03/17.
 //
-#include <cstring>
+
 #include "ISA.h"
 
 ISA::ISA() {
     this-> pc = 0;
-    memset(regs,false,sizeof(regs));
-    regs[0] = true;
+    for (int i =0; i < 32; i++)
+        regs[i].full = false;
+
+    regs[0].full = true;
+    regs[0].data = 0;
     memset(mem,false,sizeof(mem));
 
     Instr LUI("rd imm","LUI");                              list.push_back(LUI);    pc0.push_back(LUI);
@@ -53,73 +56,54 @@ ISA::ISA() {
     Instr AND("rd rs1 rs2", "AND");                         list.push_back(AND);
 }
 
-string ISA::getRandom(int number) {
+void ISA::getRandom(int number, string *p) {
     string output="";
+    p = new string[number];
     srand(time(NULL));
     int randIndex;
 
     for(int i = 0; i < number; i++)
     {
-        if(pc == 0)
-            output = handlePC0(number);
-        else
-        {
-
-        }
+        output = handlePC0(number);
+        p[i] = output;
     }
+    //TODO:Temporary done for pc0 now
 
 
-    //At pc = 0, I can't have the following: branches,shifts,loads,R type
-
-    this->pc += 4;
+    //this->pc += 4;
 }
 
 string ISA::handlePC0(int number) {
 
     srand(time(NULL));
-    string output="";
+    string output;
     int randInd;
     randInd = rand() % pc0.size();
-    output += pc0[randInd].getKeyword();
+    output = pc0[randInd].getKeyword();
     output = output + " ";
 
-    int rd,rs1,rs2,shamt;
-    rd = (rand()%31) + 1;    //from reg 1 to reg 31 (because we write) and we have pc 0
-    long long imm;
-    int maxPC = (number-1) * 4;
+    int rd,rs1,shamt,imm;
+    rd = (rand()%31) + 1;    //from reg 1 to reg 31 (because we write)
 
     switch(randInd)
     {
             //LUI
         case 0:
-            UI(output,imm,rd);
+            UI(output,imm,rd,false);
             break;
-
             //AUIPC
         case 1:
-            UI(output,imm,rd);
+            UI(output,imm,rd,true);
             break;
-
             //JAL
         case 2:
-            do
-            {
-                imm = (rand() % (maxPC+1));
-            }while((imm % 4) != 0 || (imm == 0)); // do it again if imm isn't word addressable or points to same instruction
-            output = output + to_string(rd) + ',' + to_string(imm) + "\n";
+            jumps(output,imm,rs1,rd,number,pc,false);
             break;
-
             //JALR
         case 3:
-            rs1 = rand() % 32; // from reg 0 to 31
-            do
-            {
-                imm = (rand() % (maxPC+1)); // plus 4 fl akher so we jump to another instruction
-            }while((imm % 4) != 0 || (imm == 0));// do it again if imm isn't word addressable or points to same instruction
-            output = output + to_string(rd) +',' + to_string(rs1) + ',' + to_string(imm) + "\n";
-
+            jumps(output,imm,rs1,rd,number,pc,true);
             //SB
-        case 4: rs1 = 0; //all other regs are undefined at this point
+        /*case 4: rs1 = 0; //all other regs are undefined at this point
             rs2 = 0; //first instruction so src has to be 0
             //TODO: calculate how the immediate is gonna be calculated as the new memory structure
             //temporary assuming memory is from 0 to 31
@@ -141,40 +125,41 @@ string ISA::handlePC0(int number) {
             //TODO: calculate how the immediate is gonna be calculated as the new memory structure
             //temporary assuming memory is from 0 to 31
             imm = rand() % 32;
-            break;
+            break;*/
             //Addi
-        case 7: Itype(output,rs1,imm,pc,false);
+        case 7: Itype(output,rs1,imm,pc,rd,false,0);
             break;
             //slti
-        case 8: Itype(output,rs1,imm,pc,false);
+        case 8: Itype(output,rs1,imm,pc,rd,false,1);
             break;
             //sltiu
-        case 9: Itype(output,rs1,imm,pc,true);
+        case 9: Itype(output,rs1,imm,pc,rd,true,2);
             break;
             //xori
-        case 10:Itype(output,rs1,imm,pc,false);
+        case 10:Itype(output,rs1,imm,pc,rd,false,3);
             break;
             //ori
-        case 11:Itype(output,rs1,imm,pc,false);
+        case 11:Itype(output,rs1,imm,pc,rd,false,4);
             break;
             //andi
-        case 12:Itype(output,rs1,imm,pc,false);
+        case 12:Itype(output,rs1,imm,pc,rd,false,5);
             break;
             //SLLI
-        case 13:shifts(output,rs1,shamt,pc);
+        case 13:shifts(output,rs1,shamt,rd,pc,0);
             break;
             //srli
-        case 14:shifts(output,rs1,shamt,pc);
+        case 14:shifts(output,rs1,shamt,rd,pc,1);
             break;
             //srai:
-        case 15:shifts(output,rs1,shamt,pc);
+        case 15:shifts(output,rs1,shamt,rd,pc,2);
             break;
+        default: output = "The instruction selected is probably store and it isn't implemented yet \n";
     }
     return output;
 
 }
 
-void ISA::Itype(string& output, int&rs1, long long& imm, int pc, bool SLTIU) {
+void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool SLTIU, int indic) {
 
     srand(time(NULL));
 
@@ -189,13 +174,40 @@ void ISA::Itype(string& output, int&rs1, long long& imm, int pc, bool SLTIU) {
     {
         do{
             rs1 = rand() % 32;
-        }while(!regs[rs1]); //repeat if we got an empty source
+        }while(!regs[rs1].full); //repeat if we got an empty source
     }
+
+    regs[rd].full = true;
+    if(indic == 0) //addi
+        regs[rd].data = regs[rs1].data + imm;
+    else
+        if(indic == 1) //slti
+            if(regs[rs1].data < imm)
+                regs[rd].data = 1;
+            else
+                regs[rd].data = 0;
+        else
+            if(indic == 2)  //sltiu
+            {
+                unsigned int temp = imm;
+                if(regs[rs1].data < temp)
+                    regs[rd].data = 1;
+                else
+                    regs[rd].data = 0;
+            }
+            else        //xori
+                if(indic == 3)
+                    regs[rd].data = regs[rs1].data ^ imm;
+                else    //ori
+                    if(indic == 4)
+                        regs[rd].data = regs[rs1].data | imm;
+                    else //andi
+                        regs[rd].data = regs[rs1].data & imm;
 
     output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
 }
 
-void ISA::shifts(string & output, int &rs1,int &shamt,int pc) {
+void ISA::shifts(string & output, int &rs1,int &shamt,int rd, int pc,int indic) {
 
     shamt = rand() % 32; //from 0 to (2^5)-1
     if(pc == 0)
@@ -204,15 +216,60 @@ void ISA::shifts(string & output, int &rs1,int &shamt,int pc) {
     {
         do{
             rs1 = rand() % 32;
-        }while(!regs[rs1]); //repeat if we got an empty source
+        }while(!regs[rs1].full); //repeat if we got an empty source
     }
+
+    if(indic == 0) //slli
+        regs[rd].data = regs[rs1].data << shamt;
+    else
+        if(indic == 1)
+            regs[rd].data = regs[rs1].data >> shamt; //TODO: fix it if possible; we are treating srli as srai
+    
+    regs[rd].full = true;
 
     output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(shamt) + "\n";
 }
 
-void ISA::UI(string & output, long long & imm, int rd) {
+void ISA::UI(string & output, int & imm, int rd, bool AUIPC) {
 
     imm = (rand() % 1048576) - 524288; //from -(2^19) to (2^19 -1)
     output = output + to_string(rd) + ',' + to_string(imm) + "\n";
+    regs[rd].data = imm << 20;
+    if(AUIPC)
+        regs[rd].data += pc;
+    regs[rd].full = true;
+}
+
+void ISA::jumps(string & output, int & imm, int& rs1, int rd,int number,int pc,bool jalr) {
+
+    int maxPC = (number-1) * 4;
+    int maxOffset = maxPC - pc;
+    if(!jalr)
+    {
+        do
+        {
+            imm = rand() % (maxOffset+1); //+1 to have maxOffset as an output
+        }while(imm % 4 != 0 || imm == 0);
+        output = output + to_string(rd) + ',' + to_string(imm) + "\n";
+    }
+    else
+    {
+        do
+        {
+            rs1 = rand() % 32;
+        }while(!regs[rs1].full);
+
+        maxOffset -= regs[rs1].data;
+        do
+        {
+            imm = rand() % (maxOffset +1);
+        }while(imm %4 != 0 || imm == 0);
+        output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
+    }
+
+}
+
+ISA::~ISA() {
+
 }
 
