@@ -25,16 +25,6 @@ ISA::ISA() {
 	Instr BLTU("BLTU");                            list.push_back(BLTU);
 	Instr BGEU("BGEU");                            list.push_back(BGEU);
 
-	Instr LB("LB");                                 list.push_back(LB);
-	Instr LH("LH");                                 list.push_back(LH);
-	Instr LW("LW");                                 list.push_back(LW);
-	Instr LBU("LBU");                               list.push_back(LBU);
-	Instr LHU("LHU");                               list.push_back(LHU);
-
-	Instr SB("SB");                                  list.push_back(SB);     pc0.push_back(SB);
-	Instr SH("SH");                                  list.push_back(SH);     pc0.push_back(SH);
-	Instr SW("SW");                                  list.push_back(SW);     pc0.push_back(SW);
-
 	Instr ADDI("ADDI");                               list.push_back(ADDI);   pc0.push_back(ADDI);
 	Instr SLTI("SLTI");                               list.push_back(SLTI);   pc0.push_back(SLTI);
 	Instr SLTIU("SLTIU");                             list.push_back(SLTIU);  pc0.push_back(SLTIU);
@@ -55,6 +45,16 @@ ISA::ISA() {
 	Instr SRA("SRA");                         list.push_back(SRA);
 	Instr OR("OR");                           list.push_back(OR);
 	Instr AND("AND");                         list.push_back(AND);
+
+		Instr LB("LB");                                 list.push_back(LB);
+	Instr LH("LH");                                 list.push_back(LH);
+	Instr LW("LW");                                 list.push_back(LW);
+	Instr LBU("LBU");                               list.push_back(LBU);
+	Instr LHU("LHU");                               list.push_back(LHU);
+
+	Instr SB("SB");                                  list.push_back(SB);     pc0.push_back(SB);
+	Instr SH("SH");                                  list.push_back(SH);     pc0.push_back(SH);
+	Instr SW("SW");                                  list.push_back(SW);     pc0.push_back(SW);
 }
 
 void ISA::getRandom(int number, string *p) {
@@ -75,7 +75,7 @@ string ISA::handlePC0(int number) {
 
 	string output;
 	int randInd;
-	randInd = rand() % pc0.size();
+	randInd = rand() % (pc0.size()-3); //TODO el minus 3
 	output = pc0[randInd].getKeyword();
 	output = output + " ";
 
@@ -124,31 +124,31 @@ string ISA::handlePC0(int number) {
 		imm = rand() % 32;
 		break;*/
 		//Addi
-	case 7: Itype(output, rs1, imm, pc, rd, false);
+	case 4: Itype(output, rs1, imm, pc, rd, false);
 		break;
 		//slti
-	case 8: Itype(output, rs1, imm, pc, rd, false);
+	case 5: Itype(output, rs1, imm, pc, rd, false);
 		break;
 		//sltiu
-	case 9: Itype(output, rs1, imm, pc, rd, true);
+	case 6: Itype(output, rs1, imm, pc, rd, true);
 		break;
 		//xori
-	case 10:Itype(output, rs1, imm, pc, rd, false);
+	case 7:Itype(output, rs1, imm, pc, rd, false);
 		break;
 		//ori
-	case 11:Itype(output, rs1, imm, pc, rd, false);
+	case 8:Itype(output, rs1, imm, pc, rd, false);
 		break;
 		//andi
-	case 12:Itype(output, rs1, imm, pc, rd, false);
+	case 9:Itype(output, rs1, imm, pc, rd, false);
 		break;
 		//SLLI
-	case 13:shifts(output, rs1, shamt, rd, pc);
+	case 10:shifts(output, rs1, shamt, rd, pc);
 		break;
 		//srli
-	case 14:shifts(output, rs1, shamt, rd, pc);
+	case 11:shifts(output, rs1, shamt, rd, pc);
 		break;
 		//srai:
-	case 15:shifts(output, rs1, shamt, rd, pc);
+	case 12:shifts(output, rs1, shamt, rd, pc);
 		break;
 	default: output = "The instruction selected is store and it isn't implemented yet \n";
 	}
@@ -238,10 +238,10 @@ string ISA::handleRest(int number, int i) {
 	if (i == number - 1)
 		do
 		{
-			randInd = (int)(rand() % pc0.size());
+			randInd = (int)(rand() % (list.size()-8)); //TODO el minus 8
 		} while (randInd == 2 || randInd == 3);      //last instruction cant be JAL or JALR
 	else
-		randInd = (int)(rand() % pc0.size());
+		randInd = (int)(rand() % (list.size()-8));		//TODO el minus 8
 
 	output = list[randInd].getKeyword();
 	output = output + " ";
@@ -269,47 +269,31 @@ string ISA::handleRest(int number, int i) {
 		break;
 	case 9: branches(output, rs1, rs2, imm, pc, number); //BGEU
 		break;
-	case 10: output = "The instruction selected is LB and it isn't implemented yet \n";
-		break;
-	case 11: output = "The instruction selected is LH and it isn't implemented yet \n";
-		break;
-	case 12: output = "The instruction selected is LW and it isn't implemented yet \n";
-		break;
-	case 13: output = "The instruction selected is LBU and it isn't implemented yet \n";
-		break;
-	case 14: output = "The instruction selected is LHU and it isn't implemented yet \n";
-		break;
-	case 15: output = "The instruction selected is SB and it isn't implemented yet \n";
-		break;
-	case 16: output = "The instruction selected is SH and it isn't implemented yet \n";
-		break;
-	case 17: output = "The instruction selected is SW and it isn't implemented yet \n";
-		break;
-	case 18: Itype(output, rs1, imm, pc, rd, 0);   //addi
+	case 10: Itype(output, rs1, imm, pc, rd, 0);   //addi
 		break;
 		//slti
-	case 19: Itype(output, rs1, imm, pc, rd, 1);
+	case 11: Itype(output, rs1, imm, pc, rd, 1);
 		break;
 		//sltiu
-	case 20: Itype(output, rs1, imm, pc, rd, 2);
+	case 12: Itype(output, rs1, imm, pc, rd, 2);
 		break;
 		//xori
-	case 21:Itype(output, rs1, imm, pc, rd, 3);
+	case 13:Itype(output, rs1, imm, pc, rd, 3);
 		break;
 		//ori
-	case 22:Itype(output, rs1, imm, pc, rd, 4);
+	case 14:Itype(output, rs1, imm, pc, rd, 4);
 		break;
 		//andi
-	case 23:Itype(output, rs1, imm, pc, rd, 5);
+	case 15:Itype(output, rs1, imm, pc, rd, 5);
 		break;
 		//SLLI
-	case 24:shifts(output, rs1, shamt, rd, pc);
+	case 16:shifts(output, rs1, shamt, rd, pc);
 		break;
 		//srli
-	case 25:shifts(output, rs1, shamt, rd, pc);
+	case 17:shifts(output, rs1, shamt, rd, pc);
 		break;
 		//srai:
-	case 26:shifts(output, rs1, shamt, rd, pc);
+	case 18:shifts(output, rs1, shamt, rd, pc);
 		break;
 	default: Rtype(output, rs1, rs2, rd); //R type
 	}
@@ -355,5 +339,5 @@ void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
 		rs2 = rand() % 32;
 	} while (!regs[rs2]);
 
-	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(rs2) + " and here the pc is " + to_string(this->pc) + "\n";
+	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(rs2) + "\n";
 }
