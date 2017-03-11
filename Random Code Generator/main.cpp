@@ -1,14 +1,15 @@
 #include <iostream>
 #include "ISA.h"
 using namespace std;
+int number = 20;
 int main() {
 
     string *p;
-    p = new string[5];
+    p = new string[number];
     ISA test;
-    test.getRandom(5, p);
+    test.getRandom(number, p);
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < number; i++)
         cout << p[i] << endl;
 
     system("pause");
