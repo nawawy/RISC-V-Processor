@@ -11,6 +11,7 @@ ISA::ISA() {
 	memset(regs, false, sizeof(regs));
 	regs[0] = true;
 	memset(mem, false, sizeof(mem));
+	mem[0] = true;
 
 	Instr LUI("LUI");                              list.push_back(LUI);    pc0.push_back(LUI);
 	Instr AUIPC("AUIPC");                          list.push_back(AUIPC);  pc0.push_back(AUIPC);
@@ -50,7 +51,7 @@ ISA::ISA() {
 	Instr LH("LH");                                 list.push_back(LH);
 	Instr LW("LW");                                 list.push_back(LW);
 	Instr LBU("LBU");                               list.push_back(LBU);
-	Instr LHU("LHU");                               list.push_back(LHU);
+	Instr LHU("LHU");                               list.push_back(LHU); //33
 
 	Instr SB("SB");                                  list.push_back(SB);     pc0.push_back(SB);
 	Instr SH("SH");                                  list.push_back(SH);     pc0.push_back(SH);
@@ -81,7 +82,6 @@ string ISA::handlePC0(int number) {
 
 	int rd, rs1, shamt, imm;
 	rd = (rand() % 31) + 1;    //from reg 1 to reg 31 (because we write)
-
 	switch (randInd)
 	{
 		//LUI
@@ -152,8 +152,9 @@ string ISA::handlePC0(int number) {
 		break;
 	default: output = "The instruction selected is store and it isn't implemented yet \n";
 	}
+	indxs.push_back(randInd);
+	imms.push_back(imm);
 	return output;
-
 }
 
 void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool unsign) {
@@ -238,37 +239,35 @@ string ISA::handleRest(int number, int i) {
 	if (i == number - 1)
 		do
 		{
-			randInd = (int)(rand() % (list.size()-8)); //TODO el minus 8
+			randInd = (int)(rand() % list.size());
 		} while (randInd == 2 || randInd == 3);      //last instruction cant be JAL or JALR
 	else
-		randInd = (int)(rand() % (list.size()-8));		//TODO el minus 8
+		randInd = (int)(rand() % list.size());		
 
 	output = list[randInd].getKeyword();
 	output = output + " ";
 
 	switch (randInd)
 	{
-
-	case 0: UI(output, imm, rd);    //LUI
-		break;
+		//LUI, AUIPC
+	case 0:
 	case 1: UI(output, imm, rd); //AUIPC
 		break;
+
 	case 2: jumps(output, imm, rs1, rd, number, pc, false); //JAL
 		break;
 	case 3: jumps(output, imm, rs1, rd, number, pc, true); //JALR
 		break;
-	case 4: branches(output, rs1, rs2, imm, pc, number); //BEQ
-		break;
-	case 5: branches(output, rs1, rs2, imm, pc, number); //BNE
-		break;
-	case 6: branches(output, rs1, rs2, imm, pc, number); //BLT
-		break;
-	case 7: branches(output, rs1, rs2, imm, pc, number); //BGE
-		break;
-	case 8: branches(output, rs1, rs2, imm, pc, number); //BLTU
-		break;
+
+		//BEQ,BNE,BLT,BGE,BLTU,BGEU
+	case 4: 
+	case 5: 
+	case 6:
+	case 7: 
+	case 8:
 	case 9: branches(output, rs1, rs2, imm, pc, number); //BGEU
 		break;
+
 	case 10: Itype(output, rs1, imm, pc, rd, 0);   //addi
 		break;
 		//slti
@@ -286,15 +285,22 @@ string ISA::handleRest(int number, int i) {
 		//andi
 	case 15:Itype(output, rs1, imm, pc, rd, 5);
 		break;
-		//SLLI
-	case 16:shifts(output, rs1, shamt, rd, pc);
-		break;
-		//srli
-	case 17:shifts(output, rs1, shamt, rd, pc);
-		break;
-		//srai:
+		//SLLI,srli,srai
+	case 16:
+	case 17:
 	case 18:shifts(output, rs1, shamt, rd, pc);
 		break;
+	case 29:
+	case 30:
+	case 31:
+	case 32:
+	case 33: loads(output, rs1, imm, rd);
+		break;
+	case 34:
+	case 35:
+	case 36: store(output, rs1, rs2, imm);
+		break;
+
 	default: Rtype(output, rs1, rs2, rd); //R type
 	}
 	return output;
@@ -302,6 +308,7 @@ string ISA::handleRest(int number, int i) {
 
 void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int number) {
 
+	bool srcs = false;
 	do {
 		rs1 = rand() % 32;
 	} while (!regs[rs1]);
@@ -310,21 +317,43 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 		rs2 = rand() % 32;
 	} while (!regs[rs2]);
 
+	if (rs1 == 0 && rs2 == 0)
+		srcs = true;
 	int maxPC = (number - 1) * 4;
 	int maxOffset = maxPC - pc;
 	int minOffset = 0 - pc;
 	do
 	{
 		imm = (rand() % (maxOffset - minOffset + 1)) + minOffset;
-	} while (imm % 4 != 0 || imm == 0);
+	} while ((imm % 4 != 0 || imm == 0) || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
+																// if sources are zero and imm is -ve as it will make infinite loop
 
 	output = output + to_string(rs1) + ',' + to_string(rs2) + ',' + to_string(imm) + "\n";
 }
 
-void ISA::loads(string & output) {
+void ISA::loads(string & output, int& rs1, int& imm, int rd) {
 
-	//TODO loads
-	output = "The instruction selected is load and it isn't implemented yet \n";
+	rs1 = 0;
+	do
+	{
+		imm = rand() % 32;
+	} while (!mem[imm]);
+
+	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
+}
+
+void ISA::store(string & output, int& rs1,int& rs2, int& imm)
+{
+	rs1 = 0;
+	do
+	{
+		rs2 = rand() % 32;
+	} while (!regs[rs2]);
+
+
+	imm = rand() % 32;
+
+	output = output + to_string(rs1) + ',' + to_string(rs2) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
@@ -338,6 +367,12 @@ void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
 	{
 		rs2 = rand() % 32;
 	} while (!regs[rs2]);
-
+	regs[rd] = true;
 	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(rs2) + "\n";
 }
+//Tweaks:
+//Jalr,Loads,stores always uses register as source
+//Assuming memory is from 0 to 31
+//Memory[0] has value zero at the start but can be changed
+//Added loads and stores
+//fixed infinite loops by taking both sources as 0 and -ve imm
