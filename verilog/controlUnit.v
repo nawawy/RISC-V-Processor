@@ -3,7 +3,7 @@
 
 `timescale 1ns/1ns
 
-module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_signals,pc_signals,wb_signals,zerosign);
+module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_signals,pc_signals,wb_signals,zerosign, lui);
     
     input [31:0] instr_tmp;
     input clk;
@@ -15,12 +15,12 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
     output reg [3:0] imm_signals; // immsel, immEN
     output reg [2:0] pc_signals;  // branch, pcEN, JalEN
     output reg [2:0] wb_signals;  // wbSEl, wbEN
-    output reg zerosign;
+    output reg zerosign, lui;
 
     // temp buffer for instruction
     reg [31 : 0] instr;
     always @ (posedge clk) begin
-        if (state == fetch)
+        if (state == fetch || state == waitt)
             instr <= instr_tmp;
         else
             instr <= instr;
@@ -51,7 +51,9 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
             PCplus4  = 5'd13,
             B_PC  = 5'd14,
             J_PC  = 5'd15,
-        
+            waitt = 5'd16,
+	    stop = 5'd17,
+            
             // alu control
             add_  = 6'd0,
             sub_  = 6'd1,
@@ -73,7 +75,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
     always@(posedge clk)
     begin
         if(rst) begin
-            state <= fetch;
+            state <= waitt;
             // $display("reseting");
             end
         else
@@ -83,6 +85,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
     
     always@(state or instr)
     begin
+        lui = 1'b0;
         case(state)
             fetch: 
                 begin
@@ -95,13 +98,18 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     zerosign = 1'b0;
                     
                     // $monitor("fetch op %d %t, %b", opcode, $time, instr);
-                    if(opcode == 7'b0010011 || opcode == 7'b0100011 || opcode == 7'b0000011) begin // i-type, stores, load 
+                    if(opcode == 7'b0010011 || opcode == 7'b0100011 || opcode == 7'b0000011 || opcode == 7'b1101111 || opcode == 7'b1100111)
+                    begin // i-type, stores, load 
                         // $display("over here opcode %d %t", opcode, $time);
                         nextstate = decode1_I;
                     end
                     else begin
                         nextstate = decode1_R;
                         // $display("over there opcode %d %t", opcode, $time);
+			
+		    if (opcode == 7'b1110011)
+				nextstate = stop;
+
                     end
                     
                 end
@@ -115,10 +123,37 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
                     zerosign = 1'b0;
                     
+                    if(opcode == 7'b1100011 || opcode == 7'b0010111 || opcode == 7'b0110111)
+                        imm_signals[0] = 1'b1;
+                    else
+                        imm_signals[0] = 1'b0;
+                    
                     if (opcode == 7'b0010111 || opcode == 7'b1101111 || opcode == 7'b1100111)
                         nextstate = AUIPC_alu;
                     else
                         nextstate = decode2;
+                        
+
+                    case (opcode)
+                    7'b1100011:
+                        imm_signals[3:1] = 3'b010;
+                    7'b0000011 ,
+                    7'b0010011 :
+                        imm_signals[3:1] = 3'b000;
+                    7'b0110111 ,
+                    7'b0010111 : begin
+                        imm_signals[3:1] = 3'b100;
+                        $display("here");
+                        end
+                    7'b1101111,
+                    7'b1100111: 
+                        imm_signals[3:1] = 3'b011;
+                    7'b0100011:
+                        imm_signals[3:1] = 3'b001;
+                    default: 
+                        imm_signals[3:1] = 3'b100;
+                    endcase
+                        
                 end
             decode1_I:
                 begin
@@ -135,10 +170,13 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     7'b1100011:
                         imm_signals[3:1] = 3'b010;
                     7'b0000011 ,
-                    7'b0010011 ,
-                    7'b0110111 ,
-                    7'b0010111 :
+                    7'b0010011 :
                         imm_signals[3:1] = 3'b000;
+                    7'b0110111 ,
+                    7'b0010111 : begin
+                        imm_signals[3:1] = 3'b100;
+                        // $display("here");
+                        end
                     7'b1101111,
                     7'b1100111: 
                         imm_signals[3:1] = 3'b011;
@@ -165,7 +203,11 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     zerosign = 1'b0;
                     
                     if(opcode == 7'b0100011)
-                        nextstate = I_alu;
+                        begin
+                            nextstate = I_alu;
+                            imm_signals[0] = 1'b1;
+			    imm_signals[3:1] = 3'b001;
+                        end
                     else
                         nextstate = RB_alu;
                 end
@@ -282,6 +324,9 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                      if((opcode == 7'b0010011) && (func3 == 3'b101) && (func7 == 7'b0100000))
                         alu_signals[6:1] = sra_;
                     else
+                     if (opcode == 7'b1101111 || opcode == 7'b1100111)
+                        alu_signals[6:1] = add_;
+                    else
                         alu_signals[6:1] = 6'b0;
                 
                     
@@ -330,7 +375,10 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
                     zerosign = 1'b0;
-                    
+                    if(opcode == 7'b0110111)
+                        lui = 1'b1;
+                    else
+                        lui = 1'b0;
                     nextstate = PCplus4;
                 end
                 
@@ -339,7 +387,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     wb_signals = 3'b100;   // wbSEl, wbEN
-                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    reg_signals = 5'b01100;  // regsel, regEN, rs1, rs2
                     imm_signals = 4'b0000;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
@@ -368,8 +416,8 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
             J_WB:
                 begin
                     mem_signals = 6'b000000; // IFen, fetchEN, bytesel, memWrite
-                    wb_signals = 3'b010;   // wbSEl, wbEN
-                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    wb_signals = 3'b000;   // wbSEl, wbEN
+                    reg_signals = 5'b01100;  // regsel, regEN, rs1, rs2
                     imm_signals = 4'b0000;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
@@ -383,8 +431,8 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     mem_signals[5:4] = 2'b00;
                     mem_signals[0] = 1'b0; 
                     
-                    wb_signals = 3'b001;   // wbSEl, wbEN
-                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    wb_signals = 3'b101;   // wbSEl, wbEN
+                    reg_signals = 5'b00000;  // regsel, regEN, rs1, rs2
                     imm_signals = 4'b0000;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
@@ -419,7 +467,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     mem_signals[0] = 1'b1; 
                     
                     wb_signals = 3'b000;   // wbSEl, wbEN
-                    reg_signals = 5'b00100;  // regsel, regEN, rs1, rs2
+                    reg_signals = 5'b00000;  // regsel, regEN, rs1, rs2
                     imm_signals = 4'b0000;   // immsel, immEN
                     pc_signals = 3'b000;    // branch, pcEN, JalEN
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
@@ -457,7 +505,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
                     zerosign = 1'b0;
 
-                    nextstate = fetch;
+                    nextstate = waitt;
                 end
                 
             B_PC:
@@ -470,7 +518,7 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
                     zerosign = 1'b0;
 
-                    nextstate = fetch;
+                    nextstate = waitt;
                 end
                 
             J_PC:
@@ -483,9 +531,22 @@ module controlUnit(instr_tmp,clk,rst,reg_signals,mem_signals,alu_signals,imm_sig
                     alu_signals = 9'b000000000;  // srca, srcb, aluctrl, aluEN
                     zerosign = 1'b0;
                     
+                    nextstate = waitt;
+                end
+            
+            waitt:
+                begin
+                    reg_signals = 5'b0; 
+                    mem_signals = 6'b0; 
+                    alu_signals = 9'b0; 
+                    imm_signals = 4'b0; 
+                    pc_signals = 3'b0;  
+                    wb_signals = 3'b0;  
+                    
+                    mem_signals[4] = 1'b1;
+                    zerosign = 1'b0;
                     nextstate = fetch;
                 end
-                    
             default:
                 begin
                     reg_signals = 5'b0; 
