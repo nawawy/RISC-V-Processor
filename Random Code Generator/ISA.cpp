@@ -336,8 +336,8 @@ void ISA::loads(string & output, int& rs1, int& imm, int rd) {
 	rs1 = 0;
 	do
 	{
-		imm = rand() % 32;
-	} while (!mem[imm]);
+		imm = rand() % 128;
+	} while (!mem[imm] || imm%4 != 0);
 
 	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
 }
@@ -351,7 +351,10 @@ void ISA::store(string & output, int& rs1,int& rs2, int& imm)
 	} while (!regs[rs2]);
 
 
-	imm = rand() % 32;
+	do
+	{
+		imm = rand() % 128;
+	} while (!mem[imm] || imm%4 != 0);
 
 	output = output + to_string(rs1) + ',' + to_string(rs2) + ',' + to_string(imm) + "\n";
 }
