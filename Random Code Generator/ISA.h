@@ -18,7 +18,7 @@ private:
 	vector<int>indxs;
 	vector<int>imms;
 	bool regs[32];
-	bool mem[32];
+	bool mem[128];
 	int pc;
 	string handlePC0(int);
 	string handleRest(int, int);
