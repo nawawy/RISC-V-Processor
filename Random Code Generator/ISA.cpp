@@ -174,7 +174,7 @@ void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool unsign) 
 	}
 
 	regs[rd] = true;
-	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
+	output = output + 'x' + to_string(rd) + ',' + 'x'+ to_string(rs1) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
@@ -191,13 +191,13 @@ void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
 
 	regs[rd] = true;
 
-	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(shamt) + "\n";
+	output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + to_string(shamt) + "\n";
 }
 
 void ISA::UI(string & output, int & imm, int rd) {
 
 	imm = (rand() % 1048576) - 524288; //from -(2^19) to (2^19 -1)
-	output = output + to_string(rd) + ',' + to_string(imm) + "\n";
+	output = output + 'x'+to_string(rd) + ',' + to_string(imm) + "\n";
 	regs[rd] = true;
 }
 
@@ -220,7 +220,7 @@ void ISA::jumps(string & output, int & imm, int& rs1, int rd, int number, int pc
 		{
 			imm = rand() % (maxOffset + 1);
 		} while (imm % 4 != 0 || imm == 0);
-		output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
+		output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + to_string(imm) + "\n";
 	}
 
 }
@@ -328,7 +328,7 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 	} while ((imm % 4 != 0 || imm == 0) || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
 																// if sources are zero and imm is -ve as it will make infinite loop
 
-	output = output + to_string(rs1) + ',' + to_string(rs2) + ',' + to_string(imm) + "\n";
+	output = output + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::loads(string & output, int& rs1, int& imm, int rd) {
@@ -339,7 +339,7 @@ void ISA::loads(string & output, int& rs1, int& imm, int rd) {
 		imm = rand() % 128;
 	} while (!mem[imm] || imm%4 != 0);
 
-	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(imm) + "\n";
+	output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::store(string & output, int& rs1,int& rs2, int& imm)
@@ -356,7 +356,7 @@ void ISA::store(string & output, int& rs1,int& rs2, int& imm)
 		imm = rand() % 128;
 	} while (!mem[imm] || imm%4 != 0);
 
-	output = output + to_string(rs1) + ',' + to_string(rs2) + ',' + to_string(imm) + "\n";
+	output = output + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
@@ -371,7 +371,7 @@ void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
 		rs2 = rand() % 32;
 	} while (!regs[rs2]);
 	regs[rd] = true;
-	output = output + to_string(rd) + ',' + to_string(rs1) + ',' + to_string(rs2) + "\n";
+	output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + "\n";
 }
 //Tweaks:
 //Jalr,Loads,stores always uses register as source
