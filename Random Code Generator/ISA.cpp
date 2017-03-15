@@ -356,7 +356,7 @@ void ISA::store(string & output, int& rs1,int& rs2, int& imm)
 		imm = rand() % 128;
 	} while (!mem[imm] || imm%4 != 0);
 
-	output = output + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + ',' + to_string(imm) + "\n";
+	output = output + 'x'+to_string(rs2) + ',' +to_string(imm) + '(' + 'x'+to_string(rs1) +')'+ "\n";
 }
 
 void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
