@@ -1,6 +1,3 @@
-//
-// Created by oba on 09/03/17.
-//
 #include <iostream>
 #include <fstream>
 #include "ISA.h"
@@ -16,7 +13,7 @@ int main() {
 	test.getRandom(number, p);
 
 	for (int i = 0; i < number; i++)
-		output << p[i] << endl;
+		output << p[i];
 	output << "li a7, 10\n";
 	output << "ecall\n";
 	system("pause");
