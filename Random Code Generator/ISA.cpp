@@ -12,7 +12,10 @@ ISA::ISA() {
 	regs[0] = true;
 	memset(mem, false, sizeof(mem));
 	mem[0] = true;
+	index = 0;
 
+	for (int i = 0; i < 20; i++)
+		branch[i].name = "Jump" + to_string(i + 1);
 	Instr LUI("LUI");                              list.push_back(LUI);    pc0.push_back(LUI);
 	Instr AUIPC("AUIPC");                          list.push_back(AUIPC);  pc0.push_back(AUIPC);
 
@@ -47,7 +50,7 @@ ISA::ISA() {
 	Instr OR("OR");                           list.push_back(OR);
 	Instr AND("AND");                         list.push_back(AND);
 
-		Instr LB("LB");                                 list.push_back(LB);
+	Instr LB("LB");                                 list.push_back(LB);
 	Instr LH("LH");                                 list.push_back(LH);
 	Instr LW("LW");                                 list.push_back(LW);
 	Instr LBU("LBU");                               list.push_back(LBU);
@@ -70,13 +73,14 @@ void ISA::getRandom(int number, string *p) {
 		p[i] = output;
 		this->pc += 4;
 	}
+	fixBranches(p);
 }
 
 string ISA::handlePC0(int number) {
 
 	string output;
 	int randInd;
-	randInd = rand() % (pc0.size()-3); //TODO el minus 3
+	randInd = rand() % (pc0.size() - 3); //TODO el minus 3
 	output = pc0[randInd].getKeyword();
 	output = output + " ";
 
@@ -100,29 +104,6 @@ string ISA::handlePC0(int number) {
 	case 3:
 		jumps(output, imm, rs1, rd, number, pc, true);
 		break;
-		//SB
-		/*case 4: rs1 = 0; //all other regs are undefined at this point
-		rs2 = 0; //first instruction so src has to be 0
-		//TODO: calculate how the immediate is gonna be calculated as the new memory structure
-		//temporary assuming memory is from 0 to 31
-		imm = rand() % 32;
-		break;
-		//SH
-		case 5:
-		rs1 = 0; //all other regs are undefined at this point
-		rs2 = 0; //first instruction so src has to be 0
-		//TODO: calculate how the immediate is gonna be calculated as the new memory structure
-		//temporary assuming memory is from 0 to 31
-		imm = rand() % 32;
-		break;
-		//SW
-		case 6:
-		rs1 = 0; //all other regs are undefined at this point
-		rs2 = 0; //first instruction so src has to be 0
-		//TODO: calculate how the immediate is gonna be calculated as the new memory structure
-		//temporary assuming memory is from 0 to 31
-		imm = rand() % 32;
-		break;*/
 		//Addi
 	case 4: Itype(output, rs1, imm, pc, rd, false);
 		break;
@@ -152,8 +133,6 @@ string ISA::handlePC0(int number) {
 		break;
 	default: output = "The instruction selected is store and it isn't implemented yet \n";
 	}
-	indxs.push_back(randInd);
-	imms.push_back(imm);
 	return output;
 }
 
@@ -174,7 +153,7 @@ void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool unsign) 
 	}
 
 	regs[rd] = true;
-	output = output + 'x' + to_string(rd) + ',' + 'x'+ to_string(rs1) + ',' + to_string(imm) + "\n";
+	output = output + 'x' + to_string(rd) + ',' + 'x' + to_string(rs1) + ',' + to_string(imm) + "\n";
 }
 
 void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
@@ -191,13 +170,13 @@ void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
 
 	regs[rd] = true;
 
-	output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + to_string(shamt) + "\n";
+	output = output + 'x' + to_string(rd) + ',' + 'x' + to_string(rs1) + ',' + to_string(shamt) + "\n";
 }
 
 void ISA::UI(string & output, int & imm, int rd) {
 
 	imm = (rand() % 1048576) - 524288; //from -(2^19) to (2^19 -1)
-	output = output + 'x'+to_string(rd) + ',' + to_string(imm) + "\n";
+	output = output + 'x' + to_string(rd) + ',' + to_string(imm) + "\n";
 	regs[rd] = true;
 }
 
@@ -220,7 +199,7 @@ void ISA::jumps(string & output, int & imm, int& rs1, int rd, int number, int pc
 		{
 			imm = rand() % (maxOffset + 1);
 		} while (imm % 4 != 0 || imm == 0);
-		output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + to_string(imm) + "\n";
+		output = output + 'x' + to_string(rd) + ',' + 'x' + to_string(rs1) + ',' + to_string(imm) + "\n";
 	}
 
 }
@@ -234,7 +213,7 @@ string ISA::handleRest(int number, int i) {
 	int imm, rd, rs1, rs2, shamt;
 	rd = (rand() % 31) + 1;
 
-	string output;
+	string output = "";
 	int randInd;
 	if (i == number - 1)
 		do
@@ -242,10 +221,10 @@ string ISA::handleRest(int number, int i) {
 			randInd = (int)(rand() % list.size());
 		} while (randInd == 2 || randInd == 3);      //last instruction cant be JAL or JALR
 	else
-		randInd = (int)(rand() % list.size());		
+		randInd = (int)(rand() % list.size());
 
-	output = list[randInd].getKeyword();
-	output = output + " ";
+	output += list[randInd].getKeyword();
+	output += " ";
 
 	switch (randInd)
 	{
@@ -260,10 +239,10 @@ string ISA::handleRest(int number, int i) {
 		break;
 
 		//BEQ,BNE,BLT,BGE,BLTU,BGEU
-	case 4: 
-	case 5: 
+	case 4:
+	case 5:
 	case 6:
-	case 7: 
+	case 7:
 	case 8:
 	case 9: branches(output, rs1, rs2, imm, pc, number); //BGEU
 		break;
@@ -314,7 +293,7 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 	} while (!regs[rs1]);
 
 	do {
-		rs2 = rand() % 32;
+		rs2 = (rand() % 31) + 1;	//can't compare two regs of 0
 	} while (!regs[rs2]);
 
 	if (rs1 == 0 && rs2 == 0)
@@ -326,9 +305,9 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 	{
 		imm = (rand() % (maxOffset - minOffset + 1)) + minOffset;
 	} while ((imm % 4 != 0 || imm == 0) || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
-																// if sources are zero and imm is -ve as it will make infinite loop
+															   // if sources are zero and imm is -ve as it will make infinite loop
 
-	output = output + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + ',' + to_string(imm) + "\n";
+	output = output + 'x' + to_string(rs1) + ',' + 'x' + to_string(rs2) + ",*" + to_string(imm+pc) + "*\n";
 }
 
 void ISA::loads(string & output, int& rs1, int& imm, int rd) {
@@ -337,12 +316,12 @@ void ISA::loads(string & output, int& rs1, int& imm, int rd) {
 	do
 	{
 		imm = rand() % 128;
-	} while (!mem[imm] || imm%4 != 0);
+	} while (!mem[imm] || imm % 4 != 0);
 
-	output = output + 'x'+to_string(rd) + ',' +to_string(imm) + '(' + 'x'+ to_string(rs1) + ')' + "\n";
+	output = output + 'x' + to_string(rd) + ',' + to_string(imm) + '(' + 'x' + to_string(rs1) + ')' + "\n";
 }
 
-void ISA::store(string & output, int& rs1,int& rs2, int& imm)
+void ISA::store(string & output, int& rs1, int& rs2, int& imm)
 {
 	rs1 = 0;
 	do
@@ -354,9 +333,9 @@ void ISA::store(string & output, int& rs1,int& rs2, int& imm)
 	do
 	{
 		imm = rand() % 128;
-	} while (!mem[imm] || imm%4 != 0);
+	} while (!mem[imm] || imm % 4 != 0);
 
-	output = output + 'x'+to_string(rs2) + ',' +to_string(imm) + '(' + 'x'+to_string(rs1) +')'+ "\n";
+	output = output + 'x' + to_string(rs2) + ',' + to_string(imm) + '(' + 'x' + to_string(rs1) + ')' + "\n";
 }
 
 void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
@@ -371,11 +350,32 @@ void ISA::Rtype(string & output, int& rs1, int& rs2, int rd) {
 		rs2 = rand() % 32;
 	} while (!regs[rs2]);
 	regs[rd] = true;
-	output = output + 'x'+to_string(rd) + ',' + 'x'+to_string(rs1) + ',' + 'x'+to_string(rs2) + "\n";
+	output = output + 'x' + to_string(rd) + ',' + 'x' + to_string(rs1) + ',' + 'x' + to_string(rs2) + "\n";
 }
-//Tweaks:
-//Jalr,Loads,stores always uses register as source
-//Assuming memory is from 0 to 31
-//Memory[0] has value zero at the start but can be changed
-//Added loads and stores
-//fixed infinite loops by taking both sources as 0 and -ve imm
+
+void ISA::fixBranches(string *p)
+{
+	int index = 0, index2 = 0;
+	for (int i = 0; i < 20; i++)
+	{
+		
+		int power = 1;
+		
+		if (p[i].at(0) == 'B') //Branch
+		{
+			size_t f1, f2; int tem = 0;
+			f1 = p[i].find('*');
+			f2 = p[i].find('*',f1+1);
+			for (size_t j = f2-1; j > f1; j--)
+			{
+				tem += (int(p[i].at(j)) - 48) * power;	//fix
+				power *= 10;
+			}
+
+			p[tem/4] = branch[index++].name + ": "+ p[tem/4];
+			int number = int(f2 - f1 - 1);
+			p[i].erase(f1,p[i].size()-f1);
+			p[i].replace(f1, number, branch[index2++].name + "\n");
+		}
+	}
+}
