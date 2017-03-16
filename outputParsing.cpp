@@ -5,6 +5,7 @@ using namespace std;
 ifstream gmOut, ourOut;
 string regsGM[32];
 string regsOur[32];
+string instructions[20];
 void parse1()
 {
 	string s, temp;
@@ -32,8 +33,10 @@ void parse2()
 }
 int main()
 {
-	int count = 0;
+	int count = 0; int index = 0;
+    ifstream instr;
 	ofstream compareOut;
+    instr.open("output.txt");
 	gmOut.open("g_result.txt");
 	ourOut.open("d_res.txt");
 	string empty = "";
@@ -45,17 +48,19 @@ int main()
 		regsOur[i] = "";
 	}
 
+    while(instr.peek() != EOF)
+        getline(instr,instructions[index++]);
+
 	getline(gmOut, s);           //"Program Excusion"
 	while (1)
 	{
-		count++;
 		parse1();
 		parse2();
+        compareOut << "Case: " << ++count << "\n";
 		for (int i = 0; i < 32; i++)
 			if (regsGM[i] != regsOur[i])
-				compareOut << "Reg " << i << " is different on testcase " << count << "\n";
+				compareOut << intructions[count-1] << "\n";
 
-		compareOut << "End of case" << count << "\n";
 		char a, b;
 		a = gmOut.peek();
 		b = ourOut.peek();
@@ -65,5 +70,6 @@ int main()
 
 	ourOut.close();
 	gmOut.close();
+    instr.close();
 	return 0;
 }
