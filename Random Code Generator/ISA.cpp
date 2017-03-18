@@ -198,7 +198,7 @@ void ISA::jumps(string & output, int & imm, int& rs1, int rd, int number, int pc
 		{
 			imm = rand() % (maxOffset + 1);
 		} while (imm % 4 != 0 || imm == 0 || imm == 4);
-		output = output + to_string(rd) + ',' + to_string(imm) + "\n";
+		output = output + 'x'+to_string(rd) + ',' + to_string(imm) + "\n";
 	}
 	else
 	{
