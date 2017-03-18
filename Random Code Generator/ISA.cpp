@@ -227,7 +227,7 @@ string ISA::handleRest(int number, int i) {
 		do
 		{
 			randInd = (int)(rand() % list.size());
-		} while (randInd == 2 || randInd == 3);      //last instruction cant be JAL or JALR
+		} while (randInd == 2 || randInd == 3 || randInd == 4 || randInd == 5 || randInd == 6 || randInd == 7 || randInd == 8 || randInd == 9);      //last instruction cant be JAL or JALR
 	else
 		randInd = (int)(rand() % list.size());
 
