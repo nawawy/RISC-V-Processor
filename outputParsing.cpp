@@ -5,7 +5,7 @@ using namespace std;
 ifstream gmOut, ourOut;
 string regsGM[32];
 string regsOur[32];
-string instructions[20];
+string instructions[22];
 void parse1()
 {
 	string s, temp;
@@ -59,7 +59,7 @@ int main()
         compareOut << "Case: " << ++count << "\n";
 		for (int i = 0; i < 32; i++)
 			if (regsGM[i] != regsOur[i])
-				compareOut << intructions[count-1] << "\n";
+			{compareOut << instructions[count-1] << "\n"; break;}
 
 		char a, b;
 		a = gmOut.peek();
