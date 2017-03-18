@@ -183,7 +183,7 @@ void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
 
 void ISA::UI(string & output, int & imm, int rd) {
 
-	imm = (rand() % 1048576) - 524288; //from -(2^19) to (2^19 -1)
+	imm = rand() % 100; //from -(2^19) to (2^19 -1)
 	output = output + 'x' + to_string(rd) + ',' + to_string(imm) + "\n";
 	regs[rd] = true;
 }
