@@ -147,9 +147,9 @@ string ISA::handlePC0(int number) {
 void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool unsign) {
 
 	if (!unsign)
-		imm = (rand() % 8192) - 4096; //from -(2^12) to (2^12 - 1) , if it's signed immediate()
+		imm = rand() % 100; //from -(2^12) to (2^12 - 1) , if it's signed immediate()
 	else
-		imm = rand() % 4096; //(2^12)-1
+		imm = rand() % 100; //(2^12)-1
 
 	if (pc == 0)
 		rs1 = 0;
