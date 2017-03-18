@@ -308,10 +308,9 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 		srcs = true;
 	int maxPC = (number - 1) * 4;
 	int maxOffset = maxPC - pc;
-	int minOffset = 0 - pc;
 	do
 	{
-		imm = (rand() % (maxOffset - minOffset + 1)) + minOffset;
+		imm = rand() % (maxOffset + 1);
 	} while ((imm % 4 != 0 || imm == 0) || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
 															   // if sources are zero and imm is -ve as it will make infinite loop
 
