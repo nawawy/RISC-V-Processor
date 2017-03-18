@@ -61,6 +61,7 @@ int main()
 
 		parse1();
 		parse2();
+		//compareOut << "Case: " << ++count << endl;
 		for (int i = 0; i < 32; i++)
 			if (regsGM[i] != regsOur[i])
 			{
