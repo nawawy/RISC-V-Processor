@@ -1,0 +1,15 @@
+#!/bin/bash
+        COUNTER=0
+	cd "${0%/*}"
+	#g++ Instr.cpp ISA.cpp main.cpp -std=c++11 -o r.out
+	#g++ outputParsing.cpp -o v.out
+	#g++ gold.cpp -o g.out
+        while [  $COUNTER -lt 1 ]; do
+		./a.out
+		./build_s.sh
+		iverilog CPU_tb.v -o designOutput.vvp
+		vvp designOutput.vvp -> d_res.txt
+		./g.out app2.bin > g_res2.txt
+		./v.out
+		let COUNTER=COUNTER+1
+	done

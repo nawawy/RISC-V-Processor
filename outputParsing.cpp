@@ -37,7 +37,7 @@ int main()
     ifstream instr;
 	ofstream compareOut;
     instr.open("output.txt");
-	gmOut.open("g_result.txt");
+	gmOut.open("g_res2.txt");
 	ourOut.open("d_res.txt");
 	string empty = "";
 	string s;
@@ -59,7 +59,7 @@ int main()
         compareOut << "Case: " << ++count << "\n";
 		for (int i = 0; i < 32; i++)
 			if (regsGM[i] != regsOur[i])
-				compareOut << intructions[count-1] << "\n";
+				compareOut << instructions[count-1] << "\n";
 
 		char a, b;
 		a = gmOut.peek();
