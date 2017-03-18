@@ -21,10 +21,10 @@ private:
 	brch branch[20];
 	vector<Instr> list;
 	vector<Instr> pc0;
-	int index;
 	bool regs[32];
+	bool instr[20];
 	bool mem[128];
-	int pc;
+	int pc,instrInd;
 	string handlePC0(int);
 	string handleRest(int, int);
 	void Itype(string&, int&, int&, int, int, bool);
