@@ -9,7 +9,8 @@ string instructions[22];
 void parse1()
 {
 	string s, temp;
-	gmOut.ignore(256, 'A');
+	getline(gmOut, s);
+	getline(gmOut, s);
 	getline(gmOut, s);
 	for (int i = 0; i < 32; i++)
 	{
@@ -63,8 +64,7 @@ int main()
 		for (int i = 0; i < 32; i++)
 			if (regsGM[i] != regsOur[i])
 			{
-				compareOut << instructions[count - 1] << "\n";
-				break;
+				compareOut << instructions[count - 1] << " " << i << " " << regsGM[i] << " " << regsOur[i] << "\n";
 			}
 
 		char a, b;
