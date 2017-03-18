@@ -385,7 +385,7 @@ void ISA::fixBranches(string *p)
 			if (p[tem / 4].at(0) != 'J')
 				p[tem / 4] = branch[index++].name + ": " + p[tem / 4];
 			else
-				p[i].at(p[i].size() - 1) = p[tem/4].at(4);
+				p[i].at(p[i].size() - 2) = p[tem/4].at(4);
 		}
 	}
 }
