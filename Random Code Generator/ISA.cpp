@@ -12,10 +12,14 @@ ISA::ISA() {
 	regs[0] = true;
 	memset(mem, false, sizeof(mem));
 	mem[0] = true;
-	index = 0;
+	instrInd = 0;
+
+	for (int i = 0; i < 20; i++)
+		instr[i] = false;
 
 	for (int i = 0; i < 20; i++)
 		branch[i].name = "Jump" + to_string(i + 1);
+
 	Instr LUI("LUI");                              list.push_back(LUI);    pc0.push_back(LUI);
 	Instr AUIPC("AUIPC");                          list.push_back(AUIPC);  pc0.push_back(AUIPC);
 
@@ -72,6 +76,7 @@ void ISA::getRandom(int number, string *p) {
 
 		p[i] = output;
 		this->pc += 4;
+		instrInd++;
 	}
 	fixBranches(p);
 }
@@ -80,11 +85,11 @@ string ISA::handlePC0(int number) {
 
 	string output;
 	int randInd;
-	randInd = rand() % (pc0.size() - 3); //TODO el minus 3
+	randInd = rand() % pc0.size();
 	output = pc0[randInd].getKeyword();
 	output = output + " ";
 
-	int rd, rs1, shamt, imm;
+	int rd, rs1,rs2, shamt, imm;
 	rd = (rand() % 31) + 1;    //from reg 1 to reg 31 (because we write)
 	switch (randInd)
 	{
@@ -131,7 +136,10 @@ string ISA::handlePC0(int number) {
 		//srai:
 	case 12:shifts(output, rs1, shamt, rd, pc);
 		break;
-	default: output = "The instruction selected is store and it isn't implemented yet \n";
+	case 13:
+	case 14:
+	case 15: store(output, rs1, rs2, imm);
+		break;
 	}
 	return output;
 }
@@ -244,7 +252,7 @@ string ISA::handleRest(int number, int i) {
 	case 6:
 	case 7:
 	case 8:
-	case 9: branches(output, rs1, rs2, imm, pc, number); //BGEU
+	case 9: {branches(output, rs1, rs2, imm, pc, number); instr[instrInd] = true;}
 		break;
 
 	case 10: Itype(output, rs1, imm, pc, rd, false);   //addi
@@ -293,7 +301,7 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 	} while (!regs[rs1]);
 
 	do {
-		rs2 = (rand() % 31) + 1;	//can't compare two regs of 0
+		rs2 = rand() % 32;
 	} while (!regs[rs2]);
 
 	if (rs1 == 0 && rs2 == 0)
@@ -313,10 +321,10 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 void ISA::loads(string & output, int& rs1, int& imm, int rd) {
 
 	rs1 = 0;
-	do
+	do //104 to 228
 	{
-		imm = rand() % 128;
-	} while (!mem[imm] || imm % 4 != 0);
+		imm = (rand() % 125) + 104;
+	} while (!mem[imm - 104] || imm % 4 != 0);
 
 	output = output + 'x' + to_string(rd) + ',' + to_string(imm) + '(' + 'x' + to_string(rs1) + ')' + "\n";
 }
@@ -330,10 +338,10 @@ void ISA::store(string & output, int& rs1, int& rs2, int& imm)
 	} while (!regs[rs2]);
 
 
-	do
+	do //104 to 228
 	{
-		imm = rand() % 128;
-	} while (!mem[imm] || imm % 4 != 0);
+		imm = (rand() % 125) + 104;
+	} while (!mem[imm - 104] || imm % 4 != 0);
 
 	output = output + 'x' + to_string(rs2) + ',' + to_string(imm) + '(' + 'x' + to_string(rs1) + ')' + "\n";
 }
@@ -358,24 +366,26 @@ void ISA::fixBranches(string *p)
 	int index = 0, index2 = 0;
 	for (int i = 0; i < 20; i++)
 	{
-		
 		int power = 1;
-		
-		if (p[i].at(0) == 'B') //Branch
+		if (instr[i])	//Branch
 		{
 			size_t f1, f2; int tem = 0;
 			f1 = p[i].find('*');
-			f2 = p[i].find('*',f1+1);
-			for (size_t j = f2-1; j > f1; j--)
+			f2 = p[i].find('*', f1 + 1);
+			for (size_t j = f2 - 1; j > f1; j--)
 			{
-				tem += (int(p[i].at(j)) - 48) * power;	//fix
+				tem += (int(p[i].at(j)) - 48) * power;
 				power *= 10;
 			}
 
-			p[tem/4] = branch[index++].name + ": "+ p[tem/4];
 			int number = int(f2 - f1 - 1);
-			p[i].erase(f1,p[i].size()-f1);
+			p[i].erase(f1, p[i].size() - f1);
 			p[i].replace(f1, number, branch[index2++].name + "\n");
+
+			if (p[tem / 4].at(0) != 'J')
+				p[tem / 4] = branch[index++].name + ": " + p[tem / 4];
+			else
+				p[i].at(p[i].size() - 1) = p[tem/4].at(4);
 		}
 	}
 }
