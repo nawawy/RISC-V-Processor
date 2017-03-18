@@ -147,9 +147,9 @@ string ISA::handlePC0(int number) {
 void ISA::Itype(string& output, int&rs1, int& imm, int pc, int rd, bool unsign) {
 
 	if (!unsign)
-		imm = rand() % 100; //from -(2^12) to (2^12 - 1) , if it's signed immediate()
+		imm = (rand() % 8192) - 4096; //from -(2^12) to (2^12 - 1) , if it's signed immediate()
 	else
-		imm = rand() % 100; //(2^12)-1
+		imm = rand() % 4096; //(2^12)-1
 
 	if (pc == 0)
 		rs1 = 0;
@@ -183,7 +183,7 @@ void ISA::shifts(string & output, int &rs1, int &shamt, int rd, int pc) {
 
 void ISA::UI(string & output, int & imm, int rd) {
 
-	imm = rand() % 100; //from -(2^19) to (2^19 -1)
+	imm = (rand() % 1048576) - 524288; //from -(2^19) to (2^19 -1)
 	output = output + 'x' + to_string(rd) + ',' + to_string(imm) + "\n";
 	regs[rd] = true;
 }
@@ -196,8 +196,8 @@ void ISA::jumps(string & output, int & imm, int& rs1, int rd, int number, int pc
 	{
 		do
 		{
-			imm = rand() % (maxOffset + 1); //+1 to have maxOffset as an output
-		} while (imm % 4 != 0 || imm == 0);
+			imm = rand() % (maxOffset + 1);
+		} while (imm % 4 != 0 || imm == 0 || imm == 4);
 		output = output + to_string(rd) + ',' + to_string(imm) + "\n";
 	}
 	else
@@ -206,7 +206,7 @@ void ISA::jumps(string & output, int & imm, int& rs1, int rd, int number, int pc
 		do
 		{
 			imm = rand() % (maxOffset + 1);
-		} while (imm % 4 != 0 || imm == 0);
+		} while (imm % 4 != 0 || imm == 0 || imm == 4);
 		output = output + 'x' + to_string(rd) + ',' + 'x' + to_string(rs1) + ',' + to_string(imm) + "\n";
 	}
 
@@ -311,7 +311,7 @@ void ISA::branches(string & output, int &rs1, int &rs2, int& imm, int pc, int nu
 	do
 	{
 		imm = rand() % (maxOffset + 1);
-	} while ((imm % 4 != 0 || imm == 0) || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
+	} while ((imm % 4 != 0 || imm == 0) || imm == 4 || (srcs && imm < 0)); //will repeat if immediate isn't byte addressable, if imm == 0 or
 															   // if sources are zero and imm is -ve as it will make infinite loop
 
 	output = output + 'x' + to_string(rs1) + ',' + 'x' + to_string(rs2) + ",*" + to_string(imm+pc) + "*\n";
@@ -376,7 +376,7 @@ void ISA::fixBranches(string *p)
 				tem += (int(p[i].at(j)) - 48) * power;
 				power *= 10;
 			}
-
+			string x = p[tem / 4];
 			int number = int(f2 - f1 - 1);
 			p[i].erase(f1, p[i].size() - f1);
 			p[i].replace(f1, number, branch[index2++].name + "\n");
